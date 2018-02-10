@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <AssemblyName>PushSharp_Sample</AssemblyName>
+    <RootNamespace>PushSharp_Sample</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="jv_push.p12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="jv_push.p12">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="PushSharp" Version="4.0.10" />
+    <PackageReference Include="System.Security.Permissions" Version="4.5.0-preview1-25914-04" />
+  </ItemGroup>
+
+</Project>
