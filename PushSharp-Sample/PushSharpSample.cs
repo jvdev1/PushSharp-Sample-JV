@@ -6,6 +6,7 @@ using PushSharp.Google;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace PushSharp_Sample
 {
@@ -20,7 +21,7 @@ namespace PushSharp_Sample
 
 
         /// ================== G C M ================== 
-        public static void Send_GCM(string[] recieverIds, string title, string content)
+        public static void Send_GCM(string[] recieverIds, string title, string content, string logSeparator = "\n")
         {
             // Configuration
             var config = new GcmConfiguration(GcmSenderId, GcmSenderAuthToken, null) { GcmUrl = _gcmUrl };
@@ -42,7 +43,7 @@ namespace PushSharp_Sample
                         var gcmNotification = notificationException.Notification;
                         var description = notificationException.Description;
 
-                        Console.WriteLine($"  GCM NOTIFICATION FAILED: ID={gcmNotification.MessageId}, Desc={description}");
+                        PushLog.Write($"  GCM NOTIFICATION FAILED: ID={gcmNotification.MessageId}, Desc={description}");
                     }
                     else if (ex is GcmMulticastResultException)
                     {
@@ -50,7 +51,7 @@ namespace PushSharp_Sample
 
                         foreach (var succeededNotification in multicastException.Succeeded)
                         {
-                            Console.WriteLine($"  GCM NOTIFICATION SUCCEEDED: ID={succeededNotification.MessageId}");
+                            PushLog.Write($"  GCM NOTIFICATION SUCCEEDED: ID={succeededNotification.MessageId}");
                         }
 
                         foreach (var failedKvp in multicastException.Failed)
@@ -58,7 +59,7 @@ namespace PushSharp_Sample
                             var n = failedKvp.Key;
                             var e = failedKvp.Value;
 
-                            Console.WriteLine($"  GCM NOTIFICATION FAILED: ID={n.MessageId}, Desc={e}");
+                            PushLog.Write($"  GCM NOTIFICATION FAILED: ID={n.MessageId}, Desc={e}");
                         }
 
                     }
@@ -69,23 +70,23 @@ namespace PushSharp_Sample
                         var oldId = expiredException.OldSubscriptionId;
                         var newId = expiredException.NewSubscriptionId;
 
-                        Console.WriteLine($"  DEVICE REGISTRATIONID EXPIRED:\n   -   {oldId}");
+                        PushLog.Write($"  DEVICE REGISTRATIONID EXPIRED:\n   -   {oldId}");
 
                         if (!string.IsNullOrWhiteSpace(newId))
                         {
                             // If this value isn't null, our subscription changed and we should update our database
-                            Console.WriteLine($"  DEVICE REGISTRATIONID CHANGED TO: {newId}");
+                            PushLog.Write($"  DEVICE REGISTRATIONID CHANGED TO: {newId}");
                         }
                     }
                     else if (ex is RetryAfterException)
                     {
                         var retryException = (RetryAfterException)ex;
                         // If you get rate limited, you should stop sending messages until after the RetryAfterUtc date
-                        Console.WriteLine($"  GCM RATE LIMITED, DON'T SEND MORE UNTIL AFTER {retryException.RetryAfterUtc}");
+                        PushLog.Write($"  GCM RATE LIMITED, DON'T SEND MORE UNTIL AFTER {retryException.RetryAfterUtc}");
                     }
                     else
                     {
-                        Console.WriteLine("  GCM NOTIFICATION FAILED FOR SOME UNKNOWN REASON");
+                        PushLog.Write("  GCM NOTIFICATION FAILED FOR SOME UNKNOWN REASON");
                     }
 
                     // Mark it as handled
@@ -94,7 +95,7 @@ namespace PushSharp_Sample
             };
 
             gcmBroker.OnNotificationSucceeded += (notification) => {
-                Console.WriteLine("  GCM NOTIFICATION SENT! : " + title + " :: " + content);
+                PushLog.Write("  GCM NOTIFICATION SENT! : " + title + " :: " + content);
             };
 
             // Start the broker
@@ -102,7 +103,7 @@ namespace PushSharp_Sample
 
 
             /// GCM doesnt care about title & content 
-            string print = "GCM SendToId: ";
+            PushLog.Write( "GCM SendToId: ");
             foreach (var regId in recieverIds)
             {
                 if (string.IsNullOrEmpty(regId)) continue;
@@ -127,9 +128,8 @@ namespace PushSharp_Sample
                     RegistrationIds = new List<string> { regId },
                     Data = data,
                 });
-                print += "\n   :   " + regId;
+                PushLog.Write("\n   :   " + regId);
             }
-            Console.WriteLine(print);
 
             // Stop the broker, wait for it to finish   
             // This isn't done after every message, but after you're
@@ -158,13 +158,13 @@ namespace PushSharp_Sample
                         var apnsNotification = notificationException.Notification;
                         var statusCode = notificationException.ErrorStatusCode;
 
-                        Console.WriteLine($"  Apple Notification Failed: ID={apnsNotification.Identifier}, Code={statusCode}, notification.DeviceToken={notification.DeviceToken}");
+                        PushLog.Write($"  Apple Notification Failed: ID={apnsNotification.Identifier}, Code={statusCode}, notification.DeviceToken={notification.DeviceToken}");
 
                     }
                     else
                     {
                         // Inner exception might hold more useful information like an ApnsConnectionException			
-                        Console.WriteLine($"  Apple Notification Failed for some unknown reason : {ex.InnerException}");
+                        PushLog.Write($"  Apple Notification Failed for some unknown reason : {ex.InnerException}");
                     }
 
                     // Mark it as handled
@@ -173,7 +173,7 @@ namespace PushSharp_Sample
             };
 
             apnsBroker.OnNotificationSucceeded += (notification) => {
-                Console.WriteLine("  Apple Notification Sent! : " + content);
+                PushLog.Write("  Apple Notification Sent! : " + content);
             };
 
             // Start the broker
@@ -222,8 +222,8 @@ namespace PushSharp_Sample
                 };
                 string payloadString = JsonConvert.SerializeObject(payloadData);
 
-                
-                Console.WriteLine("PAYLOAD STRING 1 : \n" + payloadString);
+
+                PushLog.Write("PAYLOAD STRING 1 : \n" + payloadString);
                 apnsBroker.QueueNotification(new ApnsNotification
                 {
                     DeviceToken = deviceToken,
